@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin</title>
+  <!-- Adicione os links para os arquivos CSS e bibliotecas que você está usando -->
+  <!-- ... -->
+</head>
+<body>
+  <!-- Conteúdo da página /admin -->
+  
+  <h1>Página de Administração</h1>
+  
+  <!-- Botão para apagar as mensagens -->
+  <button id="delete-messages-button">Apagar Todas as Mensagens</button>
+  
+  <!-- Adicione os scripts necessários e os links para as bibliotecas que você está usando -->
+  <!-- ... -->
+  
+  <script>    
+    // Função para enviar uma solicitação para apagar todas as mensagens
+    function deleteMessages() {
+      fetch('/delete-messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          login: 'ADMIN',
+          password: '03300210'
+        })
+      })
+        .then(function (response) {
+          return response.json();
+        })
+        .then(function (data) {
+          console.log('Mensagens apagadas:', data);
+        })
+        .catch(function (error) {
+          console.error('Erro ao apagar as mensagens:', error);
+        });
+    }
+    
+    // Adicionar um ouvinte de eventos para o botão
+    const deleteMessagesButton = document.getElementById('delete-messages-button');
+    deleteMessagesButton.addEventListener('click', deleteMessages);
+  </script>
+</body>
+</html>

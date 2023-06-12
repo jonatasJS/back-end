@@ -45,6 +45,27 @@ const Message = mongoose.model('Message', {
   }
 });
 
+app.post('/delete-messages', (req, res) => {
+  const { login, password } = req.body;
+
+  // Verifique se o login e a senha são válidos
+  if (login === 'ADMIN' && password === '03300210') {
+    // Exclua todas as mensagens
+    Message.deleteMany({})
+      .then(() => {
+        console.log('Todas as mensagens foram excluídas');
+        res.json({ success: true });
+      })
+      .catch((error) => {
+        console.error('Erro ao excluir as mensagens:', error);
+        res.status(500).json({ success: false, error: 'Erro ao excluir as mensagens' });
+      });
+  } else {
+    console.log('Login ou senha inválidos');
+    res.status(401).json({ success: false, error: 'Login ou senha inválidos' });
+  }
+});
+
 // Configurar o Multer para o upload de arquivos
 const storage = multer.diskStorage({
   destination: 'files',
