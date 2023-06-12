@@ -121,9 +121,6 @@
           });
 
           mediaRecorder.start();
-          setTimeout(function () {
-            mediaRecorder.stop();
-          }, 5000);
         })
         .catch(function (error) {
           console.error('Erro ao capturar o áudio:', error);
@@ -144,6 +141,7 @@
     recordButton.addEventListener('click', () => {
       if (isRocording) {
         isRocording = !isRocording
+        mediaRecorder.stop();
       } else {
         startRecording();
       }
