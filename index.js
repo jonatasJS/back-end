@@ -166,7 +166,7 @@ function getRandomColor() {
 }
 
 // Iniciar o servidor
-const port = 3000;
+const port = process.env.PORT || 3000;
 server.listen(port, () => {
-  console.log(`Servidor iniciado em http://177.126.95.20:${port}`);
+  console.log(`Servidor iniciado em https://chat-real-time-oso7.onrender.com:${port}`);
 });
