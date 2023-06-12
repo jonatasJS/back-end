@@ -21,13 +21,10 @@
     function deleteMessages() {
       fetch('/delete-messages', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
+        body: {
           login: 'ADMIN',
           password: '03300210'
-        })
+        }
       })
         .then(function (response) {
           return response.json();
