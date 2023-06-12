@@ -105,6 +105,11 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/pages/index.html');
 });
 
+// Rota para servir o HTML da pagina admin
+app.get('/admin', (req, res) => {
+  res.sendFile(__dirname + '/pages/admin.html');
+});
+
 // Configurar eventos do Socket.IO
 io.on('connection', (socket) => {
   console.log('Novo usuário conectado');
