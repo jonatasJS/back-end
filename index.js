@@ -63,7 +63,7 @@ app.post('/delete-messages', (req, res) => {
   // } else {
     // console.log('Login ou senha inválidos');
     // res.status(401).json({ success: false, error: 'Login ou senha inválidos' });
-  }
+  // }
 });
 
 // Configurar o Multer para o upload de arquivos
