@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Chat em Tempo Real</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    body {
+      background-color: #f5f5f5;
+    }
+
+    .chat-container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .chat-header {
+      background-color: #333;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+    }
+
+    .message-list {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+      max-height: 400px;
+      overflow-y: scroll;
+    }
+
+    .message {
+      background-color: #fff;
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .user-message {
+      background-color: #d1ecf1;
+    }
+
+    .other-message {
+      background-color: #f8f9fa;
+    }
+
+    .message-input {
+      flex-grow: 1;
+      padding: 8px;
+      font-size: 16px;
+      border-radius: 4px;
+      background-color: #fff;
+    }
+
+    .send-button {
+      margin-left: 10px;
+      padding: 8px 16px;
+      font-size: 16px;
+      border-radius: 4px;
+      background-color: #007bff;
+      border: none;
+      color: #fff;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="chat-container">
+    <div class="chat-header">Chat em Tempo Real</div>
+    <ul class="message-list" id="messages"></ul>
+    <form class="d-flex" id="message-form">
+      <input type="text" class="form-control message-input" id="message-input" placeholder="Digite uma mensagem">
+      <button type="submit" class="btn btn-primary send-button">Enviar</button>
+    </form>
+    <button id="record-button" class="btn btn-primary">Gravar Áudio</button>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.2/socket.io.min.js"
+    integrity="sha512-mUWPbwx6PZatai4i3+gevCw6LeuQxcMgnJs/DZij22MZ4JMpqKaEvMq0N9TTArSWEb5sdQ9xH68HMUc30eNPEA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script>
+    localStorage.clear();
+    // Conectar ao servidor WebSocket
+    const socket = io('http://177.126.95.20:3000');
+    const recordButton = document.getElementById('record-button');
+    let isRocording = false;
+
+    function startRecording() {
+      isRocording = !isRocording;
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(function (stream) {
+          const mediaRecorder = new MediaRecorder(stream);
+          const audioChunks = [];
+
+          mediaRecorder.addEventListener('dataavailable', function (event) {
+            audioChunks.push(event.data);
+          });
+
+          mediaRecorder.addEventListener('stop', function () {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.mp3');
+            formData.append('sender', localStorage.getItem('nickname'));
+
+            fetch('/upload-audio', {
+              method: 'POST',
+              body: formData
+            })
+              .then(function (response) {
+                return response.json();
+              })
+              .then(function (data) {
+                const { nickname, file } = data;
+                displayAudio(nickname, file);
+              })
+              .catch(function (error) {
+                console.error('Erro ao enviar o áudio:', error);
+              });
+          });
+
+          mediaRecorder.start();
+          setTimeout(function () {
+            mediaRecorder.stop();
+          }, 5000);
+        })
+        .catch(function (error) {
+          console.error('Erro ao capturar o áudio:', error);
+        });
+    }
+
+    function displayAudio(sender, audioUrl) {
+      const li = document.createElement('li');
+      const audio = document.createElement('audio');
+      audio.src = audioUrl;
+      audio.controls = true;
+      li.textContent = `Áudio de ${sender}: `;
+      li.appendChild(audio);
+      messagesDiv.appendChild(li);
+      scrollToBottom();
+    }
+
+    recordButton.addEventListener('click', () => {
+      if (isRocording) {
+        isRocording = !isRocording
+      } else {
+        startRecording();
+      }
+    });
+
+    // Elementos HTML
+    const messagesDiv = document.getElementById('messages');
+    const messageForm = document.getElementById('message-form');
+    const messageInput = document.getElementById('message-input');
+
+    // Função para exibir uma mensagem
+    function displayMessage(message) {
+      const li = document.createElement('li');
+      const time = new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      li.textContent = `${time} - ${message.user}: ${message.text}`;
+
+      // Verifica se a mensagem foi enviada pelo usuário atual
+      if (message.user === localStorage.getItem('nickname')) {
+        li.classList.add('user-message'); // Adiciona a classe para alinhar à esquerda
+      } else {
+        li.classList.add('other-message'); // Adiciona a classe para alinhar à direita
+      }
+
+      messagesDiv.appendChild(li);
+
+      // Fazer o scroll automático para exibir a última mensagem
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    // Enviar mensagem
+    messageForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (isRocording) {
+        isRocording = !isRocording
+      } else {
+        const text = messageInput.value.trim();
+        if (text !== '') {
+          const message = { text };
+          socket.emit('message', message);
+          messageInput.value = '';
+        }
+      }
+    });
+
+    // Receber mensagem do servidor
+    socket.on('message', (message) => {
+      console.log(message)
+      if (message.file) {
+        displayAudio(message.user, message.file)
+      } else {
+        displayMessage(message);
+      }
+    });
+
+    // Receber mensagens existentes do servidor
+    socket.on('messages', (messages) => {
+      console.log(messages)
+      messages.forEach((message) => {
+        if (message.file) {
+          displayAudio(message.user, message.file)
+        } else {
+          displayMessage(message);
+        }
+      });
+    });
+
+    // Salvar as informações do usuário no localStorage
+    socket.on('saveUserInfo', (data) => {
+      const { nickname, userId } = data;
+      localStorage.setItem('nickname', nickname);
+      localStorage.setItem('userId', userId);
+    });
+
+    // Verificar se o usuário já está logado no localStorage
+    const storedNickname = localStorage.getItem('nickname');
+    const storedUserId = localStorage.getItem('userId');
+
+    if (storedNickname && storedUserId) {
+      // Enviar as informações do usuário para o backend
+      socket.emit('userConnected', { nickname: storedNickname, userId: storedUserId });
+    } else {
+      // Exibir o modal de nickname se não houver informações salvas no localStorage
+      const nicknameModal = document.createElement('div');
+      nicknameModal.style.position = 'fixed';
+      nicknameModal.style.top = '0';
+      nicknameModal.style.left = '0';
+      nicknameModal.style.width = '100%';
+      nicknameModal.style.height = '100%';
+      nicknameModal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+      nicknameModal.style.display = 'flex';
+      nicknameModal.style.justifyContent = 'center';
+      nicknameModal.style.alignItems = 'center';
+
+      const nicknameForm = document.createElement('form');
+      nicknameForm.style.display = 'flex';
+
+      const nicknameInput = document.createElement('input');
+      nicknameInput.type = 'text';
+      nicknameInput.placeholder = 'Digite seu nickname';
+
+      const saveNicknameButton = document.createElement('button');
+      saveNicknameButton.textContent = 'Salvar';
+      saveNicknameButton.className = 'btn btn-primary';
+
+      nicknameForm.appendChild(nicknameInput);
+      nicknameForm.appendChild(saveNicknameButton);
+      nicknameModal.appendChild(nicknameForm);
+      document.body.appendChild(nicknameModal);
+
+      nicknameForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const nickname = nicknameInput.value.trim();
+        if (nickname !== '') {
+          localStorage.setItem('nickname', nickname);
+          socket.emit('userConnected', { nickname, userId: null });
+          nicknameModal.style.display = 'none';
+        }
+      });
+    }
+  </script>
+</body>
+
+</html>
