@@ -11,6 +11,7 @@ const shortid = require('shortid');
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
+const cors = require('cors')
 
 // Conectar ao MongoDB
 mongoose.connect(`mongodb+srv://${process.env.LOGIN_MONGO}:${process.env.PASS_MONGO}@cluster-teste.igkczc8.mongodb.net/?retryWrites=true&w=majority`, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -21,6 +22,7 @@ mongoose.connect(`mongodb+srv://${process.env.LOGIN_MONGO}:${process.env.PASS_MO
     console.error('Erro ao conectar ao MongoDB:', error);
   });
 
+app.use(cors());
 app.use('/files', express.static(__dirname + '/files'))
 // Definir modelo de mensagem no MongoDB
 const Message = mongoose.model('Message', {
