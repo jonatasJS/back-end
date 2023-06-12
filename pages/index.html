@@ -121,6 +121,9 @@
           });
 
           mediaRecorder.start();
+          recordButton.innerText = "Parar de gravar";
+          recordButton.classList.toggle('btn-danger');
+          recordButton.classList.toggle('btn-primary');
         })
         .catch(function (error) {
           console.error('Erro ao capturar o áudio:', error);
@@ -142,6 +145,9 @@
       if (isRocording) {
         isRocording = !isRocording
         mediaRecorder.stop();
+        recordButton.innerText = "Gravar Áudio";
+        recordButton.classList.toggle('btn-danger');
+        recordButton.classList.toggle('btn-primary');
       } else {
         startRecording();
       }
