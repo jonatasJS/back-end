@@ -10,5 +10,8 @@
   "name": "back-end",
   "version": "1.0.0",
   "main": "index.js",
+  "engines": {
+    "node": "v18.16.0"
+  },
   "license": "MIT"
 }
